@@ -208,7 +208,7 @@ void Controller::vk(std::string s)
 			ak("aiufx",v)?hd
 			:ak("AIUFXeEoO",v)?hd*2.0
 			:0.1;
-		bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दा॒य
+		bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दाय॑
 		
 		auto ms=[&P](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
 		{
