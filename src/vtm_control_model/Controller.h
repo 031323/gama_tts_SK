@@ -42,7 +42,7 @@ namespace VTMControlModel {
 
 class Controller {
 public:
-	Controller(const char* configDirPath, Model& model);
+	Controller(const char* configDirPath, Model& model,bool sks=false);
 	~Controller() = default;
 
 	Configuration& vtmControlModelConfiguration() { return vtmControlModelConfig_; }
@@ -110,6 +110,8 @@ private:
 	std::unique_ptr<VTM::VocalTractModel> vtm_;
 	std::vector<std::vector<float>> vtmParamList_;
 	float outputScale_;
+	bool sk; // संस्कृ॑ताय
+	void vk(std::string s); // वा॒च॒न॒क॒र्म
 };
 
 } /* namespace VTMControlModel */

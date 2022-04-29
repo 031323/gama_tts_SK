@@ -39,12 +39,14 @@
 namespace GS {
 namespace VTMControlModel {
 
-Controller::Controller(const char* configDirPath, Model& model)
+Controller::Controller(const char* configDirPath, Model& model,bool sks)
 		: configDirPath_(configDirPath)
 		, model_(model)
 		, eventList_(configDirPath, model_)
 		, vtmControlModelConfig_(configDirPath)
 		, outputScale_(1.0)
+		, sk(sks)
+
 {
 	// Load VTM configuration.
 	std::ostringstream vtmConfigFilePath;
@@ -119,13 +121,190 @@ Controller::nextChunk(const std::string& phoneticString, std::size_t& index, std
 	return false;
 }
 
+inline bool ak(std::string s,char c) // अ॒धि॒का॒र॒सू॒च॒कः
+{
+	return s.find(c)!=std::string::npos;
+}
+void Controller::vk(std::string s)
+{
+	{
+		std::string ns="";
+		for(int i=0;i<s.size();i++)
+			if(ak("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[i]))ns+=s[i];
+		s=ns;
+	}
+	std::cout<<"\""<<s<<"\""<<std::endl;
+
+	float P[128][22];
+	auto set=[this,&P](unsigned char v,std::string name)
+	{
+		auto PL=model_.postureList().find(name);
+		int i;
+		for(i=0;i<16;i++)
+			P[v][i]=PL->getParameterTarget(i);
+		for(i=16;i<22;i++)P[v][i]=0;
+		P[v][16]=P[v][12];
+	};
+	set(' ',"a");
+	P[(unsigned char)' '][1]=0;
+
+	set('a', "a");set('A',"ar");set('i', "i");set('I',"ee");set('u',"uu");set('U',"uu");
+	set('f',"rr");set('F',"rr");set('x', "l");set('X', "l");set('e', "e");set('E',"er");set('o',"o");set('O',"aw");
+	set('M', "m");set('H', "h");
+	set('k', "k");set('K', "k");set('g', "g");set('G', "g");set('N',"ng");
+	set('c',"ch");set('C',"ch");set('j', "j");set('J', "j");set('Y', "n");
+	set('w', "t");set('W', "t");set('q', "d");set('Q', "d");set('R', "t");
+	set('t',"th");set('T',"th");set('d',"dh");set('D',"dh");set('n',"th");
+	set('p', "p");set('P', "p");set('b', "b");set('B', "b");set('m', "m");
+	set('y', "y");set('r',"rr");set('l', "l");set('v', "v");
+	set('S', "s");set('z',"sh");set('s', "s");set('h', "h");
+	set('V',"f");
+	P[(unsigned char)'v'][3]=0;
+	P[(unsigned char)'v'][1]=54;
+	P[(unsigned char)'v'][14]=0.4;
+//	P[(unsigned char)'v'][13]=0.4;
+
+	for(unsigned char i:std::string("tTdDn"))
+	{
+		P[i][13]=0.1;
+		P[i][12]=0.2;
+		P[i][3]=0;
+	}
+	for(unsigned char i:std::string("wWqQR"))
+	{
+		P[i][16]=0.1;
+		P[i][12]=1;
+	}
+	for(unsigned char i:std::string("Rn"))
+	{
+		for(int p=0;p<4;p++)
+			P[i][p]=P[(unsigned char)'m'][p];
+		P[i][15]=P[(unsigned char)'m'][15];
+	}
+	if(0)for(unsigned char i:std::string("cCjJ"))
+	{
+		for(int p=3;p<4;p++)
+			P[i][p]=P[(unsigned char)'S'][p];
+	}
+	for(unsigned char i:std::string("KGCJWQTDPB"))
+	{
+		P[i][3]=14;
+	}
+	std::vector<float> PL;
+	PL.resize(22);
+	for(size_t i=0;i<s.size();i++)
+	{
+		unsigned char v=s[i];
+		unsigned char _v=i>0?s[i-1]:' ';
+		unsigned char v_=(i<s.size()-1)?s[i+1]:' ';
+		if(v=='H')
+		{
+			if(ak("pP",v_))v='V';
+			if(ak("Szs",v_))v=v_;
+		}
+		float hd=0.15; // ह्र॒स्वा॒व॒धिः॒
+		float pd=0.01; // प्र॒थ॒मा॒व॒धिः
+		float vd=      // अ॒व॒धिः 
+			ak("aiufx",v)?hd
+			:ak("AIUFXeEoO",v)?hd*2.0
+			:0.1;
+		bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दा॒य
+		
+		auto ms=[&P](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
+		{
+			if(p==2&&ak("KGCJWQTDPB",v1))return (float)40.0;
+			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return P[v2][p];
+			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return P[v1][p];
+			else if(p==15) return std::max(P[v1][p],P[v2][p]);
+			else return std::min(P[v1][p],P[v2][p]);
+		};
+		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+		{
+			for(int p=0;p<22;p++)
+				PL[p]=
+					((p>=7&&p<=14)||p==16)?(
+					ak("aiufx",v)?
+					((t<vd/2.0)?
+					(ms(p,_v,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
+					:(ms(p,v,v_)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)))
+					:ak("AIUFXeEoO",v)?
+					((t<hd/2.0)?
+					(ms(p,_v,v)*(1.0-t*2.0/hd)+P[v][p]*t*2.0/hd)
+					:(vd-t<hd/2.0)?
+					(ms(p,v,v_)*(1-(vd-t)*2.0/hd)
+					 +P[v][p]*((vd-t)*2.0/hd))
+					:P[v][p]
+					)					
+					:
+					(ms(p,_v,v)*(1.0-t/vd)
+					 +ms(p,v,v_)*(t/vd))
+					)
+					:(p==1?
+					((t<pd/2.0)?
+					(ms(p,_v,v)*(1.0-t*2.0/pd)+P[v][p]*t*2.0/pd)
+					:(vd-t<pd/2.0)?
+					(ms(p,v,v_)*(1-(vd-t)*2.0/pd)
+					 +P[v][p]*((vd-t)*2.0/pd))
+					:P[v][p]
+					)
+					:p==15?
+					(ms(p,_v,v)*(1.0-t/vd)
+					+ms(p,v,v_)*(t/vd))
+					:((t<vd/2.0)?
+					(ms(p,_v,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
+					:(ms(p,v,v_)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd))));
+			PL[0]=-10;
+			vtmParamList_.push_back(PL);
+		}
+		
+	}
+	for(double t=0;t<0.1;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+		vtmParamList_.push_back(PL);
+	if(false){
+	L:
+	auto a_PL=model_.postureList().find("a");
+	std::vector<float> PL;
+	PL.resize(22);
+	for(int i=0;i<16;i++)
+		PL[i]=a_PL->getParameterTarget(i);
+	PL[0]=-10;
+	PL[1]=1;
+	PL[16]=PL[12];
+	PL[17]=0;
+	PL[18]=2;
+	PL[19]=0;
+	PL[20]=0;
+	PL[21]=0;
+
+	float ak=0.15,rp=0.05,rk=0.;
+	for(int i=0;i<(ak*2+rp*2+rk+0.5)*250;i++)
+	{
+		PL[17]=0.1+
+		((i<ak*250||i>(ak+rp*2+rk)*250)?0
+		:(i<(ak+rp)*250)?((float)i-ak*250)/rp/250
+		:(i>(ak+rp+rk)*250)?((ak+rp*2.0+rk)*250-i)/rp/250
+		:1)/2.0;
+
+		if(i<ak*250*0.5){PL[1]=60.0*(float)i/ak/0.5/250;}
+		else if((ak*2+rp*2+rk)*250-i<ak*0.25*250)PL[1]=60.0*std::max(((ak*2+rp*2+rk)*250-i)/ak/0.25/250,0.0);
+		else PL[1]=60-PL[17]*2*5;
+
+		PL[16]=1.8-PL[17];
+		PL[18]=PL[17];
+		//PL[11]=1.8-PL[17];
+		PL[12]=a_PL->getParameterTarget(12)+(0.2-a_PL->getParameterTarget(12))*PL[17]*2.0;
+		vtmParamList_.push_back(PL);
+	}
+	}
+}
 void
 Controller::getParametersFromPhoneticString(const std::string& phoneticString)
 {
 	vtmParamList_.clear();
 	initUtterance();
 
-	if (vtmControlModelConfig_.phoStrFormat == PhoneticStringFormat::mbrola) {
+	if(sk)vk(phoneticString);
+	else if (vtmControlModelConfig_.phoStrFormat == PhoneticStringFormat::mbrola) {
 		if (!pho1Parser_) {
 			pho1Parser_ = std::make_unique<Pho1Parser>(configDirPath_.c_str(), model_, eventList_);
 		}
@@ -196,7 +375,7 @@ Controller::getParametersFromStream(std::istream& in)
 }
 
 void
-Controller::synthesizePhoneticStringToFile(const std::string& phoneticString, const char* vtmParamFile, const char* outputFile)
+Controller::synthesizePhoneticStringToFile(const std::string& phoneticString, const char* vtmParamFile, const char* outputFile)				
 {
 	getParametersFromPhoneticString(phoneticString);
 	if (vtmParamFile) writeVTMParameterFile(vtmParamList_, vtmParamFile);
@@ -290,7 +469,7 @@ Controller::synthesize(std::vector<std::vector<float>>& vtmParamList)
 	const unsigned int controlSteps = static_cast<unsigned int>(std::rint(vtm_->internalSampleRate() / vtmControlModelConfig_.controlRate));
 	const float coef = 1.0f / controlSteps;
 
-	const std::size_t numParam = model_.parameterList().size();
+	const std::size_t numParam = sk?22:model_.parameterList().size();
 	std::vector<float> currentParameter(numParam);
 	std::vector<float> currentParameterDelta(numParam);
 

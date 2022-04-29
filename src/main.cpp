@@ -112,6 +112,8 @@ tts(int argc, char* argv[])
 	const char* dataDir      = nullptr;
 	const char* outputFile   = nullptr;
 
+	bool sk=false; // संस्कृ॑ताय 
+
 	int i = 2;
 	while (argc - i > 0 && isOption(argv[i])) {
 		if (strcmp("-v", argv[i]) == 0) {
@@ -122,6 +124,8 @@ tts(int argc, char* argv[])
 				showUsage(); return EXIT_FAILURE;
 			}
 			textInput = argv[i];
+		} else if (strcmp("-s", argv[i]) == 0) {
+			sk=true;			
 		} else if (strcmp("-p", argv[i]) == 0) {
 			++i;
 			if (argc - i < 1) {
@@ -172,12 +176,22 @@ tts(int argc, char* argv[])
 		auto vtmControlModel = std::make_unique<GS::VTMControlModel::Model>();
 		vtmControlModel->load(dataDir, VTM_CONTROL_MODEL_CONFIG_FILE);
 
-		auto vtmController = std::make_unique<GS::VTMControlModel::Controller>(dataDir, *vtmControlModel);
-		auto textParser = GS::TextParser::TextParser::getInstance(
-								dataDir,
-								vtmController->vtmControlModelConfiguration().phoStrFormat);
-		std::string phoneticString = textParser->parse(text.c_str());
-		vtmController->synthesizePhoneticStringToFile(phoneticString, vtmParamFile, outputFile);
+		auto vtmController = std::make_unique<GS::VTMControlModel::Controller>(dataDir, *vtmControlModel,sk);
+		if(sk&&vtmController->vtmConfigData().value<std::string>("dll_path").find("tts_5")==std::string::npos)
+		{
+			std::cerr << "Error: Non-compatible VTM for SK" << std::endl;
+			return EXIT_FAILURE;
+		}
+
+		if(!sk)
+		{
+			auto textParser = GS::TextParser::TextParser::getInstance(
+							dataDir,
+							vtmController->vtmControlModelConfiguration().phoStrFormat);
+			std::string phoneticString = textParser->parse(text.c_str());
+			vtmController->synthesizePhoneticStringToFile(phoneticString, vtmParamFile, outputFile);
+		}
+		else vtmController->synthesizePhoneticStringToFile(text, vtmParamFile, outputFile);
 
 	} catch (std::exception& e) {
 		std::cerr << "Exception: " << e.what() << std::endl;

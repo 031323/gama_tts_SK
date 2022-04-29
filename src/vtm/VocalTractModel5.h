@@ -95,7 +95,8 @@ private:
 		R6 = 5, /*  S22 - S25  */
 		R7 = 6, /*  S26 - S27  */
 		R8 = 7, /*  S28 - S30  */
-		TOTAL_REGIONS = 8
+		TOTAL_REGIONS = 8,
+		R6_0 = 9 // S22
 	};
 	enum { /*  NASAL REGIONS  */
 		NR1 = 0,
@@ -217,7 +218,14 @@ private:
 		PARAM_R7         = 13,
 		PARAM_R8         = 14,
 		PARAM_VELUM      = 15,
-		TOTAL_PARAMETERS = 16
+		TOTAL_PARAMETERS = 16,
+		PARAM_R6_0=16,
+		PARAM_r_0_2=17,
+		PARAM_r_1=18,
+		PARAM_spk=19, // स्फो॒ट॒का॒लः
+		PARAM_sppk=20, // स्फो॒ट॒प्र॒का॒रः
+		PARAM_spt=21, // स्फो॒ट॒ती॒व्र॒ता
+		TOTAL_PARAMETERS_sk=22
 	};
 	enum LogParameters {
 		log_param_vtm5_pitch
@@ -269,6 +277,21 @@ private:
 			upperCoeff = c * (r2_2 - r0_2 - r1_2);
 		}
 	};
+	struct Junction4 {
+		TFloat leftCoeff{};
+		TFloat rightCoeff{};
+		TFloat upperCoeff{};
+		void configure(TFloat leftRadius, TFloat rightRadius, TFloat upperRadius) {
+			// Flow equations.
+			const TFloat r0_2 =  leftRadius *  leftRadius;
+			const TFloat r1_2 = rightRadius * rightRadius;
+			const TFloat r2_2 = upperRadius * upperRadius;
+			const TFloat c = 1.0f / (r0_2 + r1_2 + 2.0*r2_2);
+			leftCoeff  = c * (r0_2 - r1_2 - 2.0*r2_2);
+			rightCoeff = c * (r1_2 - r0_2 - 2.0*r2_2);
+			upperCoeff = c * ( - r0_2 - r1_2);
+		}
+	};
 	struct Section {
 		std::array<TFloat, SectionDelay + 1> top{};
 		std::array<TFloat, SectionDelay + 1> bottom{};
@@ -303,7 +326,20 @@ private:
 		right.top[  inPtr_] = ( left.top[   outPtr_] + upper.bottom[outPtr_] + junction.rightCoeff * partialInflux) * dampingFactor_;
 		upper.top[  inPtr_] = ( left.top[   outPtr_] + right.bottom[outPtr_] + junction.upperCoeff * partialInflux) * dampingFactor_;
 	}
-
+	void propagateJunction4u(Section& left, Junction4& junction, Section& right, Section& upper) {
+		// Flow equations.
+		const TFloat partialInflux = left.top[outPtr_] + right.bottom[outPtr_] + 2.0*upper.bottom[outPtr_];
+		left.bottom[inPtr_] = (right.bottom[outPtr_] + 2.0*upper.bottom[outPtr_] + junction.leftCoeff  * partialInflux) * dampingFactor_;
+		right.top[  inPtr_] = ( left.top[   outPtr_] + 2.0*upper.bottom[outPtr_] + junction.rightCoeff * partialInflux) * dampingFactor_;
+		upper.top[  inPtr_] = ( left.top[   outPtr_] + right.bottom[outPtr_] + upper.bottom[outPtr_] + junction.upperCoeff * partialInflux) * dampingFactor_;
+	}
+	void propagateJunction4d(Section& left, Junction4& junction, Section& right, Section& upper) {
+		// Flow equations.
+		const TFloat partialInflux = left.top[outPtr_] + right.bottom[outPtr_] + 2.0*upper.top[outPtr_];
+		left.bottom[inPtr_] = (right.bottom[outPtr_] + 2.0*upper.top[outPtr_] + junction.leftCoeff  * partialInflux) * dampingFactor_;
+		right.top[  inPtr_] = ( left.top[   outPtr_] + 2.0*upper.top[outPtr_] + junction.rightCoeff * partialInflux) * dampingFactor_;
+		upper.bottom[  inPtr_] = ( left.top[   outPtr_] + right.bottom[outPtr_] + upper.top[outPtr_] + junction.upperCoeff * partialInflux) * dampingFactor_;
+	}
 	VocalTractModel5(const VocalTractModel5&) = delete;
 	VocalTractModel5& operator=(const VocalTractModel5&) = delete;
 	VocalTractModel5(VocalTractModel5&&) = delete;
@@ -315,6 +351,8 @@ private:
 	void initializeNasalCavity();
 	TFloat vocalTract(TFloat input, TFloat frication, TFloat glottalLossFactor);
 
+	bool sk=false;
+
 	bool interactive_;
 	bool logParameters_;
 	Configuration config_;
@@ -324,7 +362,9 @@ private:
 
 	/*  MEMORY FOR TUBE AND TUBE COEFFICIENTS  */
 	std::array<Section, TOTAL_SECTIONS> oropharynx_;
-	Junction2 oropharynxJunction_[TOTAL_JUNCTIONS];
+	Section Ru[8];
+	Junction2 oropharynxJunction_[TOTAL_JUNCTIONS],JRu[2];
+	Junction4 JR[2];
 	std::array<Section, TOTAL_NASAL_SECTIONS> nasal_;
 	Junction2 nasalJunction_[TOTAL_NASAL_JUNCTIONS];
 	Junction3 velumJunction_;
@@ -335,7 +375,7 @@ private:
 	TFloat crossmixFactor_;              /*  calculated crossmix factor  */
 	TFloat breathinessFactor_;
 
-	std::array<TFloat, TOTAL_PARAMETERS>                currentParameter_;
+	std::array<TFloat, TOTAL_PARAMETERS_sk>                currentParameter_;
 	std::vector<float>                                  outputBuffer_;
 	std::unique_ptr<SampleRateConverter<TFloat>>        srConv_;
 	std::unique_ptr<PoleZeroRadiationImpedance<TFloat>> mouthRadiationImpedance_;
@@ -604,6 +644,15 @@ VocalTractModel5<TFloat, SectionDelay>::calculateTubeCoefficients()
 		oropharynxJunction_[i].configure(currentParameter_[j], currentParameter_[j + 1]);
 	}
 
+	if(sk)
+	{
+		oropharynxJunction_[J5].configure(currentParameter_[PARAM_R5],currentParameter_[PARAM_R6_0]);
+		JRu[0].configure(currentParameter_[PARAM_r_0_2],currentParameter_[PARAM_r_1]);
+		JRu[1].configure(currentParameter_[PARAM_r_1],currentParameter_[PARAM_r_0_2]);
+		JR[0].configure(currentParameter_[PARAM_R6_0],currentParameter_[PARAM_R6],currentParameter_[PARAM_r_0_2]);
+		JR[1].configure(currentParameter_[PARAM_R6],currentParameter_[PARAM_R7],currentParameter_[PARAM_r_0_2]);
+	}
+
 	mouthRadiationImpedance_->update(currentParameter_[PARAM_R8] * 1.0e-2f /* cm --> m */);
 
 	// Configure 3-way junction.
@@ -656,17 +705,26 @@ VocalTractModel5<TFloat, SectionDelay>::vocalTract(TFloat input, TFloat fricatio
 	propagate(oropharynx_[S19], oropharynx_[S20]);
 	propagate(oropharynx_[S20], oropharynx_[S21]);
 	propagateJunction(oropharynx_[S21], oropharynxJunction_[J5], oropharynx_[S22]);
-	propagate(oropharynx_[S22], oropharynx_[S23]);
+	if(sk)propagateJunction4u(oropharynx_[S22],JR[0],oropharynx_[S23],Ru[0]);
+	else propagate(oropharynx_[S22], oropharynx_[S23]);
 	propagate(oropharynx_[S23], oropharynx_[S24]);
 	propagate(oropharynx_[S24], oropharynx_[S25]);
-	propagateJunction(oropharynx_[S25], oropharynxJunction_[J6], oropharynx_[S26]);
+	if(sk)
+	{
+		propagateJunction(Ru[0], JRu[0], Ru[1]);
+		Ru[1].top[outPtr_]*=(1.0+0.008*(float)rand()/RAND_MAX);
+		propagateJunction(Ru[1], JRu[1], Ru[2]);
+	}
+	bool as=false; // अ॒न्त्य॒श॒ब्दः
+	if((!as)&&sk)propagateJunction4d(oropharynx_[S25],JR[1],oropharynx_[S26],Ru[2]);
+	else propagateJunction(oropharynx_[S25], oropharynxJunction_[J6], oropharynx_[S26]);
 	propagate(oropharynx_[S26], oropharynx_[S27]);
 	propagateJunction(oropharynx_[S27], oropharynxJunction_[J7], oropharynx_[S28]);
 	propagate(oropharynx_[S28], oropharynx_[S29]);
 	propagate(oropharynx_[S29], oropharynx_[S30]);
 
 	TFloat mouthOutputFlow;
-	mouthRadiationImpedance_->process(oropharynx_[S30].top[outPtr_], mouthOutputFlow, oropharynx_[S30].bottom[inPtr_]);
+	mouthRadiationImpedance_->process(oropharynx_[S30].top[outPtr_] + (as?Ru[2].top[outPtr_]*2.0:0), mouthOutputFlow, oropharynx_[S30].bottom[inPtr_]);
 	oropharynx_[S30].bottom[inPtr_] *= dampingFactor_;
 
 	propagate(nasal_[N1], nasal_[N2]);
@@ -746,11 +804,25 @@ template<typename TFloat, unsigned int SectionDelay>
 void
 VocalTractModel5<TFloat, SectionDelay>::setAllParameters(const std::vector<float>& parameters)
 {
-	if (parameters.size() != TOTAL_PARAMETERS) {
+	sk=parameters.size()==TOTAL_PARAMETERS_sk;
+	if (parameters.size() != TOTAL_PARAMETERS && !sk) {
 		THROW_EXCEPTION(VTMException, "Wrong number of parameters: "
 				<< parameters.size() << " (should be " << TOTAL_PARAMETERS << ").");
 	}
 
+	if(sk)
+	{
+		int i;
+		i=PARAM_R6_0;currentParameter_[i]=std::max(parameters[i]*config_.radiusCoef[R6]
+						,TFloat{GS_VTM5_MIN_RADIUS});
+		i=PARAM_r_0_2;currentParameter_[i]=std::max(parameters[i]*config_.radiusCoef[R6]
+						,TFloat{GS_VTM5_MIN_RADIUS});
+		i=PARAM_r_1;currentParameter_[i]=std::max(parameters[i]*config_.radiusCoef[R6]
+						,TFloat{GS_VTM5_MIN_RADIUS});
+		i=PARAM_spk;currentParameter_[i]=parameters[i];
+		i=PARAM_sppk;currentParameter_[i]=parameters[i];
+		i=PARAM_spt;currentParameter_[i]=parameters[i];
+	}
 	for (std::size_t i = PARAM_GLOT_PITCH; i <= PARAM_FRIC_BW; ++i) {
 		currentParameter_[i] = parameters[i];
 	}
