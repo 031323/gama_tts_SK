@@ -320,7 +320,7 @@ void Controller::vk(std::string s)
 		{
 			float mpk=hd/2.0; // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
-			PL[p]=-6;
+			PL[p]=-6.0*(1.0+0.05*(float)rand()/(float)RAND_MAX);
 			{
 				p=1;
 				float nd=std::min(0.03,hd*0.2);
