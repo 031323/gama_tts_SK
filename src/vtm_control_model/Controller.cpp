@@ -159,7 +159,7 @@ void Controller::vk(std::string s)
 	set('w', "t");set('W', "t");set('q', "d");set('Q', "d");set('R', "t");
 	set('t',"th");set('T',"th");set('d',"dh");set('D',"dh");set('n',"th");
 	set('p', "p");set('P', "p");set('b', "b");set('B', "b");set('m', "m");
-	set('y', "y");set('r', "t");set('l', "l");set('v', "v");
+	set('y', "y");set('r', "t");set('l', "l");set('v', "u");
 	set('S', "s");set('z',"sh");set('s', "s");set('h', "h");
 	set('V',"f");
 	P[(unsigned char)'v'][3]=0;
@@ -270,8 +270,10 @@ void Controller::vk(std::string s)
 				p=1;
 				float nd=0.03;
 				if(ak("KGCJWQTDPB",pv)&&t<mpk)PL[p]=P[v][p]*t/mpk;
-				else if(ak(" ",vc)&&vd-t<nd)PL[p]=P[v][p]*((vd-t)/nd);
-				else if(ak(" ",pv)&&t<nd)PL[p]=P[v][p]*t/nd;
+				else if((ak(" ",vc)||(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v)))&&vd-t<nd)
+					PL[p]=P[v][p]*((vd-t)/nd);
+				else if((ak(" ",pv)||(ak("aiufxAIUFXeEoO",pv)&&ak("aiufxAIUFXeEoO",v)))&&t<nd)
+						PL[p]=P[v][p]*t/nd;
 				else PL[p]=(t<pd/2.0)?
 						(ms(p,pv,v)*(1.0-t*2.0/pd)+P[v][p]*t*2.0/pd)
 						:(vd-t<pd/2.0)?
@@ -331,7 +333,10 @@ void Controller::vk(std::string s)
 		
 			vtmParamList_.push_back(PL);
 		}
-		
+		if(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v))
+			for(double t=0;t<0.06;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+				vtmParamList_.push_back(PL);
+
 	}
 	for(double t=0;t<0.1;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		vtmParamList_.push_back(PL);
