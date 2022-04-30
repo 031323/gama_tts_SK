@@ -127,6 +127,41 @@ inline bool ak(std::string s,char c) // अ॒धि॒का॒र॒सू॒�
 }
 void Controller::vk(std::string s)
 {
+	if(0){
+	auto a_PL=model_.postureList().find("i");
+	std::vector<float> PL;
+	PL.resize(22);
+	for(int i=0;i<16;i++)
+		PL[i]=a_PL->getParameterTarget(i);
+	PL[0]=-10;
+	PL[1]=1;
+	PL[16]=PL[12];
+	PL[17]=0;
+	PL[18]=2;
+	PL[19]=0;
+	PL[20]=0;
+	PL[21]=0;
+
+	float ak=0.15,rp=0.05,rk=0.;
+	for(int i=0;i<(ak*2+rp*2+rk+0.5)*250;i++)
+	{
+		PL[17]=0.1+
+		((i<ak*250||i>(ak+rp*2+rk)*250)?0
+		:(i<(ak+rp)*250)?((float)i-ak*250)/rp/250
+		:(i>(ak+rp+rk)*250)?((ak+rp*2.0+rk)*250-i)/rp/250
+		:1)/2.0;
+
+		if(i<ak*250*0.5){PL[1]=60.0*(float)i/ak/0.5/250;}
+		else if((ak*2+rp*2+rk)*250-i<ak*0.25*250)PL[1]=60.0*std::max(((ak*2+rp*2+rk)*250-i)/ak/0.25/250,0.0);
+		else PL[1]=60-PL[17]*2*5;
+
+		PL[16]=1.8-PL[17];
+		PL[18]=PL[17];
+		//PL[11]=1.8-PL[17];
+		PL[12]=a_PL->getParameterTarget(12)+(0.2-a_PL->getParameterTarget(12))*PL[17]*2.0;
+		vtmParamList_.push_back(PL);
+	}
+	}
 	{
 		std::string ns="";
 		for(size_t i=0;i<s.size();i++)
@@ -234,12 +269,31 @@ void Controller::vk(std::string s)
 			if(ak("pP",vc))v='V';
 			if(ak("Szs",vc))v=vc;
 		}
-		float hd=0.15; // ह्र॒स्वा॒व॒धिः॒
+		float vnd=0.1*0.75;
+		float hd=0.15*0.75; // ह्र॒स्वा॒व॒धिः॒
 		float pd=-0.01; // प्र॒थ॒मा॒व॒धिः
-		float vd=      // अ॒व॒धिः 
-			ak("aiufx",v)?hd
+		auto vdd=[hd,vnd,pd](unsigned char v)
+		{
+			return ak("aiufx",v)?hd
 			:ak("AIUFXeEoO",v)?hd*2.0
-			:0.1;
+			:vnd;
+		};
+		float vd=vdd(v);     // अ॒व॒धिः 
+		if(ak("aiufx",pv))
+		{	
+			float mk=hd+vd;
+			int vs=1;
+			for(size_t j=i+1;j<s.size();j++)
+			{
+				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
+				{
+					mk+=vdd(s[j]);
+					vs++;
+				}
+				else break;
+			}
+			if(vs>1)vd+=std::max(3*hd-mk,(float)0.0);
+		}
 		[[maybe_unused]] bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दाय॑
 		
 		auto ms=[&P](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
@@ -252,6 +306,7 @@ void Controller::vk(std::string s)
 			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return (P[v1][p]*ykms+P[v2][p]*((float)1.0-ykms));
 			else if(p==15) return std::max(P[v1][p],P[v2][p]);
 			else if(p==17||p==18)return std::max(P[v1][p],P[v2][p]);
+			else if((v1=='r'||v2=='r')&&p==16)return P[(unsigned char)'r'][p];
 			else return std::min(P[v1][p],P[v2][p]);
 		};
 		auto ayauk=[&P](int p,unsigned char v,int k)
@@ -268,7 +323,7 @@ void Controller::vk(std::string s)
 			PL[p]=-10;
 			{
 				p=1;
-				float nd=0.03;
+				float nd=std::min(0.03,hd*0.2);
 				if(ak("KGCJWQTDPB",pv)&&t<mpk)PL[p]=P[v][p]*t/mpk;
 				else if((ak(" ",vc)||(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v)))&&vd-t<nd)
 					PL[p]=P[v][p]*((vd-t)/nd);
@@ -340,41 +395,6 @@ void Controller::vk(std::string s)
 	}
 	for(double t=0;t<0.1;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		vtmParamList_.push_back(PL);
-	if(false){
-	auto a_PL=model_.postureList().find("a");
-	std::vector<float> PL;
-	PL.resize(22);
-	for(int i=0;i<16;i++)
-		PL[i]=a_PL->getParameterTarget(i);
-	PL[0]=-10;
-	PL[1]=1;
-	PL[16]=PL[12];
-	PL[17]=0;
-	PL[18]=2;
-	PL[19]=0;
-	PL[20]=0;
-	PL[21]=0;
-
-	float ak=0.15,rp=0.05,rk=0.;
-	for(int i=0;i<(ak*2+rp*2+rk+0.5)*250;i++)
-	{
-		PL[17]=0.1+
-		((i<ak*250||i>(ak+rp*2+rk)*250)?0
-		:(i<(ak+rp)*250)?((float)i-ak*250)/rp/250
-		:(i>(ak+rp+rk)*250)?((ak+rp*2.0+rk)*250-i)/rp/250
-		:1)/2.0;
-
-		if(i<ak*250*0.5){PL[1]=60.0*(float)i/ak/0.5/250;}
-		else if((ak*2+rp*2+rk)*250-i<ak*0.25*250)PL[1]=60.0*std::max(((ak*2+rp*2+rk)*250-i)/ak/0.25/250,0.0);
-		else PL[1]=60-PL[17]*2*5;
-
-		PL[16]=1.8-PL[17];
-		PL[18]=PL[17];
-		//PL[11]=1.8-PL[17];
-		PL[12]=a_PL->getParameterTarget(12)+(0.2-a_PL->getParameterTarget(12))*PL[17]*2.0;
-		vtmParamList_.push_back(PL);
-	}
-	}
 }
 void
 Controller::getParametersFromPhoneticString(const std::string& phoneticString)
