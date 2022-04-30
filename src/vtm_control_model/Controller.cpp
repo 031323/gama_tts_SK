@@ -159,7 +159,7 @@ void Controller::vk(std::string s)
 	set('w', "t");set('W', "t");set('q', "d");set('Q', "d");set('R', "t");
 	set('t',"th");set('T',"th");set('d',"dh");set('D',"dh");set('n',"th");
 	set('p', "p");set('P', "p");set('b', "b");set('B', "b");set('m', "m");
-	set('y', "y");set('r',"rr");set('l', "l");set('v', "v");
+	set('y', "y");set('r', "t");set('l', "l");set('v', "v");
 	set('S', "s");set('z',"sh");set('s', "s");set('h', "h");
 	set('V',"f");
 	P[(unsigned char)'v'][3]=0;
@@ -170,7 +170,9 @@ void Controller::vk(std::string s)
 	for(unsigned char i:std::string("tTdDn"))
 	{
 		P[i][13]=0.1;
-		P[i][12]=0.2;
+		P[i][12]=0.3;
+	//	P[i][16]=0.2;
+	//	P[i][11]=0.3;
 		P[i][3]=0;
 	}
 	for(unsigned char i:std::string("wWqQR"))
@@ -187,12 +189,12 @@ void Controller::vk(std::string s)
 	for(unsigned char i:std::string("jJ"))
 	{
 		for(int p=3;p<4;p++)
-			P[i][p]=34;
+			P[i][p]=40;
 	}
 	for(unsigned char i:std::string("cC"))
 	{
 		for(int p=3;p<4;p++)
-			P[i][p]=14.5;
+			P[i][p]=18;
 	}
 	for(unsigned char i:std::string("KGCJWQTDPB"))
 	{
@@ -200,6 +202,25 @@ void Controller::vk(std::string s)
 	}
 	for(int i=4;i<=6;i++)
 		P[(unsigned char)'S'][i]=P[(unsigned char)'c'][i];
+	for(int i=7;i<=16;i++)
+	{
+		float nt=10;
+		for(unsigned char j:std::string("aium"))
+			nt=std::min(nt,P[j][i]);
+		P[(unsigned char)'M'][i]=nt;
+	}
+	for(int i=16;i<=18;i++)
+	{
+		//if(i==17||i==18)
+		//	P[(unsigned char)'r'][i]=0.6;
+		//else
+		if(i==16)P[(unsigned char)'r'][i]=1.8;
+		if(i==17||i==18)P[(unsigned char)'r'][i]=0.1;
+		else P[(unsigned char)'r'][i]=2;
+	}
+	P[(unsigned char)'r'][12]=0.47;
+	P[(unsigned char)'r'][1]=55;
+	P[(unsigned char)'M'][15]=1.0;
 	P[(unsigned char)'z'][6]=1700;
 	std::vector<float> PL;
 	PL.resize(22);
@@ -223,22 +244,31 @@ void Controller::vk(std::string s)
 		
 		auto ms=[&P](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
 		{
+			float ykms=0.5;
 			if(ak(" ",v1))return P[v2][p];
 			else if(ak(" ",v2))return P[v1][p];
 			else if(p==2&&ak("KGCJWQTDPB",v1))return (float)60.0; // unused
-			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return P[v2][p];
-			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return P[v1][p];
+			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return (P[v1][p]*((float)1.0-ykms)+P[v2][p]*ykms);
+			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return (P[v1][p]*ykms+P[v2][p]*((float)1.0-ykms));
 			else if(p==15) return std::max(P[v1][p],P[v2][p]);
+			else if(p==17||p==18)return std::max(P[v1][p],P[v2][p]);
 			else return std::min(P[v1][p],P[v2][p]);
 		};
+		auto ayauk=[&P](int p,unsigned char v,int k)
+		{
+			if(v=='E')return k?P[(unsigned char)'i'][p]:P[(unsigned char)'a'][p];
+			else if(v=='O')return k?P[(unsigned char)'u'][p]:P[(unsigned char)'a'][p];
+			else return P[v][p];
+		};
+		//TODO: र॒का॒रः।  अ॒नु॒स्वा॒रः।  ह्र॒स्वा॒र्द्ध॒का॒ले आ॑स्यपरि॒वर्त्त॑नम्।
 		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
 			float mpk=hd/2.0; // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
-			PL[p]=-8;
+			PL[p]=-10;
 			{
 				p=1;
-				float nd=0.06;
+				float nd=0.03;
 				if(ak("KGCJWQTDPB",pv)&&t<mpk)PL[p]=P[v][p]*t/mpk;
 				else if(ak(" ",vc)&&vd-t<nd)PL[p]=P[v][p]*((vd-t)/nd);
 				else if(ak(" ",pv)&&t<nd)PL[p]=P[v][p]*t/nd;
@@ -255,12 +285,13 @@ void Controller::vk(std::string s)
 			p=3;
 			if(ak("cCjJ",v))
 			{
-				PL[p]=t<vd/2.0?0:P[v][p];	
+				PL[p]=ak("cCjJ",vc)?0:t<vd/2.0?0:P[v][p];	
 			}
 			else PL[p]=P[v][p];
 			for(p=4;p<7;p++)
 				PL[p]=P[v][p];
 			for(p=7;p<22;p++)
+			{
 				if(p!=15)PL[p]=
 					ak("aiufx",v)?
 					((t<vd/2.0)?
@@ -268,20 +299,28 @@ void Controller::vk(std::string s)
 					:(ms(p,v,vc)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)))
 					:ak("AIUFXeEoO",v)?
 					((t<hd/2.0)?
-					(ms(p,pv,v)*(1.0-t*2.0/hd)+P[v][p]*t*2.0/hd)
+					(ms(p,pv,v)*(1.0-t*2.0/hd)+(ak("EO",v)?ayauk(p,v,0):P[v][p])*t*2.0/hd)
 					:(vd-t<hd/2.0)?
 					(ms(p,v,vc)*(1-(vd-t)*2.0/hd)
-					 +P[v][p]*((vd-t)*2.0/hd))
-					:P[v][p]
-					)					
+					 +(ak("EO",v)?ayauk(p,v,1):P[v][p])*((vd-t)*2.0/hd))
+					:(ak("EO",v)?(ayauk(p,v,0)*(vd-hd/2.0-t)/(vd-hd)+ayauk(p,v,1)*(t-hd/2.0)/(vd-hd)):P[v][p])
+					)
 					:
 					(ms(p,pv,v)*(1.0-t/vd)
 					 +ms(p,v,vc)*(t/vd))
 					;
+			}
+			if(v=='r')
+			{
+				PL[17]=P[v][17]+(t<vd/2.0?t*2.0/vd:(2.0-t*2.0/vd))/2.0;
+				PL[18]=PL[17];
+				PL[16]=P[v][16]-PL[17];
+				PL[12]=((t<vd/2.0)?ms(12,pv,v):ms(12,v,vc))*(1-PL[17]*2.0)+0.2*PL[17]*2.0;
+			}
 			{
 				p=15;
 				double nd=std::min(hd,vd)/2.0;
-				PL[p]=false?(ms(p,pv,v)*(1.0-t/vd)
+				PL[p]=true?(ms(p,pv,v)*(1.0-t/vd)
 					+ms(p,v,vc)*(t/vd)):
 					((t<nd)?
 					(ms(p,pv,v)*(1.0-t/nd)+P[v][p]*t/nd)

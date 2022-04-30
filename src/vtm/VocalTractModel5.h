@@ -712,7 +712,7 @@ VocalTractModel5<TFloat, SectionDelay>::vocalTract(TFloat input, TFloat fricatio
 	if(sk)
 	{
 		propagateJunction(Ru[0], JRu[0], Ru[1]);
-		Ru[1].top[outPtr_]*=(1.0+0.008*(float)rand()/RAND_MAX);
+		Ru[1].top[outPtr_]*=(1.0+0.004*(float)rand()/RAND_MAX);
 		propagateJunction(Ru[1], JRu[1], Ru[2]);
 	}
 	bool as=false; // अ॒न्त्य॒श॒ब्दः
