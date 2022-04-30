@@ -179,7 +179,7 @@ tts(int argc, char* argv[])
 		auto vtmController = std::make_unique<GS::VTMControlModel::Controller>(dataDir, *vtmControlModel,sk);
 		if(sk&&vtmController->vtmConfigData().value<std::string>("dll_path").find("tts_5")==std::string::npos)
 		{
-			std::cerr << "Error: Non-compatible VTM for SK" << std::endl;
+			std::cerr << "Error: Non-compatible VTM for SK." << std::endl;
 			return EXIT_FAILURE;
 		}
 
