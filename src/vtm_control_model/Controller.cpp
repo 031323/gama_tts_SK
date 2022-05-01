@@ -207,9 +207,10 @@ void Controller::vk(std::string s)
 	for(unsigned char i:std::string("tTdDn"))
 	{
 		P[i][13]=0.1;
-		P[i][12]=0.3;
-	//	P[i][16]=0.2;
-	//	P[i][11]=0.3;
+		P[i][12]=i=='n'?1.5:0.3;
+		P[i][14]=1;
+		P[i][16]=P[i][12];
+		P[i][11]=i=='n'?1.5:1.2;
 		P[i][3]=0;
 	}
 	for(unsigned char i:std::string("wWqQR"))
@@ -359,7 +360,8 @@ void Controller::vk(std::string s)
 				else if(v=='h'&&vd-t<hk&&false)PL[p]=t<vd*0.5?0:P[vc][p]*(t-vd+hk)/hk;
 				else if((ak(" ",vc)||(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v)))&&vd-t<nd)
 					PL[p]=P[v][p]*((vd-t)/nd);
-				else if((ak(" ",pv)||(ak("aiufxAIUFXeEoO",pv)&&ak("aiufxAIUFXeEoO",v)))&&t<nd)
+				else if(((ak(" ",pv)&&!ak("gGjJqQdDbB",v))
+					||(ak("aiufxAIUFXeEoO",pv)&&ak("aiufxAIUFXeEoO",v)))&&t<nd)
 						PL[p]=P[v][p]*t/nd;
 				else PL[p]=(t<pd/2.0)?
 						(ms(p,pv,v)*(1.0-t*2.0/pd)+P[v][p]*t*2.0/pd)
@@ -397,7 +399,7 @@ void Controller::vk(std::string s)
 					(t<ptk?((ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/ptk))
 					 :P[v][p])
 					:
-					(ak("aiufx",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v)||(v=='o'&&t<vd/2.0))?
+					(ak("aiufx",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v)||(ak("o",v)&&t<vd/2.0))?
 					((t<vd/2.0)?
 					(ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
 					:(ms(p,v,vc)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)))
