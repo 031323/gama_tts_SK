@@ -394,7 +394,7 @@ void Controller::vk(std::string s)
 					(t<ptk?((ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/ptk))
 					 :P[v][p])
 					:
-					(ak("aiufx",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v))?
+					(ak("aiufxo",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v))?
 					((t<vd/2.0)?
 					(ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
 					:(ms(p,v,vc)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)))
