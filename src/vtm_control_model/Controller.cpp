@@ -32,6 +32,8 @@
 #include "VTMUtil.h"
 #include "WAVEFileWriter.h"
 
+#include "global.h"
+
 #define VTM_CONFIG_FILE_NAME "/vtm.config"
 
 
@@ -190,7 +192,7 @@ void Controller::vk(std::string s)
 	set('f',"rr");set('F',"rr");set('x', "l");set('X', "l");set('e', "e");set('E',"er");set('o',"o");set('O',"aw");
 	set('M', "m");set('H', "h");
 	set('k', "k");set('K', "k");set('g', "g");set('G', "g");set('N',"ng");
-	set('c',"ch");set('C',"ch");set('j', "j");set('J', "j");set('Y', "n");
+	set('c',"ch");set('C',"ch");set('j', "j");set('J', "j");set('Y',"ch");
 	set('w', "t");set('W', "t");set('q', "d");set('Q', "d");set('R', "t");
 	set('t',"th");set('T',"th");set('d',"dh");set('D',"dh");set('n',"th");
 	set('p', "p");set('P', "p");set('b', "b");set('B', "b");set('m', "m");
@@ -215,7 +217,7 @@ void Controller::vk(std::string s)
 		P[i][16]=0.1;
 		P[i][12]=1;
 	}
-	for(unsigned char i:std::string("Rn"))
+	for(unsigned char i:std::string("RnY"))
 	{
 		for(int p=0;p<4;p++)
 			P[i][p]=P[(unsigned char)'m'][p];
@@ -223,11 +225,13 @@ void Controller::vk(std::string s)
 	}
 	for(unsigned char i:std::string("jJ"))
 	{
+		P[i][12]=0.1;
 		for(int p=3;p<4;p++)
 			P[i][p]=40;
 	}
 	for(unsigned char i:std::string("cC"))
 	{
+		P[i][12]=0.1;
 		for(int p=3;p<4;p++)
 			P[i][p]=18;
 	}
@@ -240,7 +244,7 @@ void Controller::vk(std::string s)
 	for(int i=7;i<=16;i++)
 	{
 		float nt=10;
-		for(unsigned char j:std::string("aium"))
+		for(unsigned char j:std::string("aiu"))
 			nt=std::min(nt,P[j][i]);
 		P[(unsigned char)'M'][i]=nt;
 	}
@@ -258,6 +262,18 @@ void Controller::vk(std::string s)
 	P[(unsigned char)'r'][1]=55;
 	P[(unsigned char)'M'][15]=1.0;
 	P[(unsigned char)'z'][6]=1700;
+
+	if(0)for(unsigned char v:std::string("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh"))
+		for(int i=7;i<15;i++)
+			if(P[v][i]<0.09)std::cout<<"error: "<<(char)v<<"\n";
+	for(unsigned char v:std::string("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh"))
+		for(int i=7;i<=18;i++)
+		{
+			if(vv)
+				P[v][i]=P[v][i]*P[v][i];
+			if(ak("kKNwWRtTnpPm",v)&&P[v][i]<0.11)P[v][i]=0;
+		}
+
 	std::vector<float> PL;
 	PL.resize(22);
 	for(size_t i=0;i<s.size();i++)
@@ -358,9 +374,9 @@ void Controller::vk(std::string s)
 			else PL[p]=0;
 			if(ak("kKgGwWqQtTdDpPbB",v))
 			{
-				float kpv=hd*0.3;
+				float kpv=hd*0;
 				float kk=hd*0.2;
-				if(ak("kKgG",v)&&(!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=14;
+				if(ak("kKgG",v)&&(!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=20;
 			}
 			p=3;
 			if(ak("cCjJ",v))
@@ -372,7 +388,12 @@ void Controller::vk(std::string s)
 				PL[p]=P[v][p];
 			for(p=7;p<22;p++)
 			{
+				float ptk=std::min(hd*0.5,vd*0.5);
 				if(p!=15)PL[p]=
+					(ak("wWqQRpPbBm",pv)&&t<vd/2.0)?
+					(t<ptk?((ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/ptk))
+					 :P[v][p])
+					:
 					(ak("aiufx",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v))?
 					((t<vd/2.0)?
 					(ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
@@ -425,6 +446,10 @@ void Controller::vk(std::string s)
 	}
 	for(double t=0;t<0.1;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		vtmParamList_.push_back(PL);
+
+	if(0)for(size_t i=0;i<vtmParamList_.size();i++)
+		vtmParamList_[i][0]=-10.0*(1.0-(float)i/(float)vtmParamList_.size())
+				+-1.0*(float)i/(float)vtmParamList_.size();
 }
 void
 Controller::getParametersFromPhoneticString(const std::string& phoneticString)

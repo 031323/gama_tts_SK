@@ -21,4 +21,6 @@
 #define GAMA_TTS_VERSION "0.9"
 #define VTM_CONTROL_MODEL_CONFIG_FILE "/artic.xml"
 
+constexpr bool vv=0;
+
 #endif /* GLOBAL_H_ */
