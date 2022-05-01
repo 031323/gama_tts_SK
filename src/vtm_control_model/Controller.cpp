@@ -293,6 +293,7 @@ void Controller::vk(std::string s)
 		{
 			return ak("aiufx",v)?hd
 			:ak("AIUFXeEoO",v)?hd*2.0
+			:v=='H'?hd
 			:vnd;
 		};
 		float vd=vdd(v);     // अ॒व॒धिः 
@@ -317,6 +318,7 @@ void Controller::vk(std::string s)
 		{
 			float ykms=0.5;
 			if(ak(" ",v1))return P[v2][p];
+			else if(v2=='H'&&p==2)return P[v2][p];
 			else if(ak(" ",v2))return P[v1][p];
 			else if(p==2&&ak("KGCJWQTDPB",v1))return (float)60.0; // unused
 			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return (P[v1][p]*((float)1.0-ykms)+P[v2][p]*ykms);
@@ -390,7 +392,8 @@ void Controller::vk(std::string s)
 			{
 				float ptk=std::min(hd*0.5,vd*0.5);
 				if(p!=15)PL[p]=
-					(ak("wWqQRpPbBm",pv)&&t<vd/2.0)?
+					(v=='H'&&vc==' ')?P[pv][p]
+					:(ak("wWqQRpPbBm",pv)&&t<vd/2.0)?
 					(t<ptk?((ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/ptk))
 					 :P[v][p])
 					:
@@ -444,6 +447,7 @@ void Controller::vk(std::string s)
 				vtmParamList_.push_back(PL);
 
 	}
+	PL[1]=0;PL[2]=0;PL[3]=0;
 	for(double t=0;t<0.1;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		vtmParamList_.push_back(PL);
 
