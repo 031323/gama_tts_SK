@@ -233,7 +233,7 @@ void Controller::vk(std::string s)
 	}
 	for(unsigned char i:std::string("KGCJWQTDPB"))
 	{
-		P[i][2]=14;
+		P[i][2]=18;
 	}
 	for(int i=4;i<=6;i++)
 		P[(unsigned char)'S'][i]=P[(unsigned char)'c'][i];
@@ -246,12 +246,13 @@ void Controller::vk(std::string s)
 	}
 	for(int i=16;i<=18;i++)
 	{
-		//if(i==17||i==18)
-		//	P[(unsigned char)'r'][i]=0.6;
-		//else
 		if(i==16)P[(unsigned char)'r'][i]=1.8;
 		if(i==17||i==18)P[(unsigned char)'r'][i]=0.1;
 		else P[(unsigned char)'r'][i]=2;
+	}
+	for(unsigned char i:std::string("Vzs"))
+	{
+		P[i][3]*=1.3;
 	}
 	P[(unsigned char)'r'][12]=0.47;
 	P[(unsigned char)'r'][1]=55;
@@ -307,6 +308,7 @@ void Controller::vk(std::string s)
 			else if(p==15) return std::max(P[v1][p],P[v2][p]);
 			else if(p==17||p==18)return std::max(P[v1][p],P[v2][p]);
 			else if((v1=='r'||v2=='r')&&p==16&&v1!='R'&&v2!='R')return P[(unsigned char)'r'][p];
+			else if(p==2&&v2=='h')return std::max(P[v1][p],P[v2][p]);
 			else return std::min(P[v1][p],P[v2][p]);
 		};
 		auto ayauk=[&P](int p,unsigned char v,int k)
@@ -315,16 +317,28 @@ void Controller::vk(std::string s)
 			else if(v=='O')return k?P[(unsigned char)'u'][p]:P[(unsigned char)'a'][p];
 			else return P[v][p];
 		};
+		auto sv=[](unsigned char v1,unsigned char v2)
+		{
+			return 
+					  (ak("kKgG",v1)&&ak("kKgG",v2))
+					||(ak("cCjJ",v1)&&ak("cCjJ",v2))
+					||(ak("wWqQ",v1)&&ak("wWqQ",v2))
+					||(ak("tTdD",v1)&&ak("tTdD",v2))
+					||(ak("pPbB",v1)&&ak("pPbB",v2))
+					;
+		};
 		//TODO: र॒का॒रः।  अ॒नु॒स्वा॒रः।  ह्र॒स्वा॒र्द्ध॒का॒ले आ॑स्यपरि॒वर्त्त॑नम्।
 		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
-			float mpk=hd/2.0; // म॒हा॒प्रा॒ण॒का॒लः
+			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
 			PL[p]=-6.0*(1.0+0.05*(float)rand()/(float)RAND_MAX);
 			{
 				p=1;
 				float nd=std::min(0.03,hd*0.2);
+				float hk=vd/2;
 				if(ak("KGCJWQTDPB",pv)&&t<mpk)PL[p]=P[v][p]*t/mpk;
+				else if(v=='h'&&vd-t<hk&&false)PL[p]=t<vd*0.5?0:P[vc][p]*(t-vd+hk)/hk;
 				else if((ak(" ",vc)||(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v)))&&vd-t<nd)
 					PL[p]=P[v][p]*((vd-t)/nd);
 				else if((ak(" ",pv)||(ak("aiufxAIUFXeEoO",pv)&&ak("aiufxAIUFXeEoO",v)))&&t<nd)
@@ -338,7 +352,16 @@ void Controller::vk(std::string s)
 			}
 			p=2;
 			if(ak("KGCJWQTDPB",pv)&&t<mpk)PL[p]=P[pv][p];
-			else PL[p]=P[v][p];
+			else if(!ak("KGCJWQTDPB",v)) PL[p]=((t<vd/2.0)?
+					(ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
+					:(ms(p,v,vc)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)));
+			else PL[p]=0;
+			if(ak("kKgGwWqQtTdDpPbB",v))
+			{
+				float kpv=hd*0.3;
+				float kk=hd*0.2;
+				if(ak("kKgG",v)&&(!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=14;
+			}
 			p=3;
 			if(ak("cCjJ",v))
 			{
