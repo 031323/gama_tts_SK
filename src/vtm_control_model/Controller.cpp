@@ -381,14 +381,15 @@ void Controller::vk(std::string s)
 					((t<hd/2.0)?
 					(ms(p,pv,v)*(1.0-t*2.0/hd)
 					 +(ak("EO",v)?ayauk(p,v,0)
-					 :(v=='A'&&pv=='n')?P[(unsigned char)'a'][p]// ना॒ना॒कृ॒ते।
+					 :(v=='A'&&ak("ntTdD",pv))?P[(unsigned char)'a'][p]// ना॒ना॒कृ॒ते।
 					 :P[v][p])*t*2.0/hd)
 					:(vd-t<hd/2.0)?
 					(ms(p,v,vc)*(1-(vd-t)*2.0/hd)
 					 +(ak("EO",v)?ayauk(p,v,1):P[v][p])*((vd-t)*2.0/hd))
 					:(ak("EO",v)?(ayauk(p,v,0)*(vd-hd/2.0-t)/(vd-hd)+ayauk(p,v,1)*(t-hd/2.0)/(vd-hd))
 						// ना॒ना॒कृ॒ते।
-					 :(v=='A'&&pv=='n')?P[(unsigned char)'a'][p]*(vd-hd/2.0-t)/(vd-hd)+P[v][p]*(t-hd/2.0)/(vd-hd)
+					 :(v=='A'&&ak("ntTdD",pv))?
+					 	P[(unsigned char)'a'][p]*(vd-hd/2.0-t)/(vd-hd)+P[v][p]*(t-hd/2.0)/(vd-hd)
 					 :P[v][p])
 					)
 					:
