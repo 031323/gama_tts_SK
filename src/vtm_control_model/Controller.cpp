@@ -206,7 +206,7 @@ void Controller::vk(std::string s)
 
 	for(unsigned char i:std::string("tTdDn"))
 	{
-		P[i][13]=0.1;
+		P[i][13]=i=='n'?0.01:0.1;
 		P[i][12]=i=='n'?1.5:0.3;
 		P[i][14]=1;
 		P[i][16]=P[i][12];
@@ -290,7 +290,7 @@ void Controller::vk(std::string s)
 		float vnd=0.1*0.75;
 		float hd=0.15*0.75; // ह्र॒स्वा॒व॒धिः॒
 		float pd=-0.01; // प्र॒थ॒मा॒व॒धिः
-		auto vdd=[hd,vnd,pd](unsigned char v)
+		auto vdd=[hd,vnd](unsigned char v)
 		{
 			return ak("aiufx",v)?hd
 			:ak("AIUFXeEoO",v)?hd*2.0
@@ -298,6 +298,7 @@ void Controller::vk(std::string s)
 			:vnd;
 		};
 		float vd=vdd(v);     // अ॒व॒धिः 
+		if(ak("aAiIuUfFxXeEoO",pv)&&!ak("aAiIuUfFxXeEoO",vc))vd=hd;
 		if(ak("aiufx",pv))
 		{	
 			float mk=hd+vd;
@@ -315,27 +316,29 @@ void Controller::vk(std::string s)
 		}
 		[[maybe_unused]] bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दाय॑
 		
-		auto ms=[&P](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
-		{
-			float ykms=0.5;
-			if(ak(" ",v1))return P[v2][p];
-			else if(v2=='H'&&p==2)return P[v2][p];
-			else if(ak(" ",v2))return P[v1][p];
-			else if(p==2&&ak("KGCJWQTDPB",v1))return (float)60.0; // unused
-			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return (P[v1][p]*((float)1.0-ykms)+P[v2][p]*ykms);
-			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return (P[v1][p]*ykms+P[v2][p]*((float)1.0-ykms));
-			else if(p==15) return std::max(P[v1][p],P[v2][p]);
-			else if(p==17||p==18)return std::max(P[v1][p],P[v2][p]);
-			else if((v1=='r'||v2=='r')&&p==16&&v1!='R'&&v2!='R')return P[(unsigned char)'r'][p];
-			else if(p==2&&v2=='h')return std::max(P[v1][p],P[v2][p]);
-			else return std::min(P[v1][p],P[v2][p]);
-		};
-		auto ayauk=[&P](int p,unsigned char v,int k)
+		auto PEO=[&P](int p,unsigned char v,int k)
 		{
 			if(v=='E')return k?P[(unsigned char)'i'][p]:P[(unsigned char)'a'][p];
 			else if(v=='O')return k?P[(unsigned char)'u'][p]:P[(unsigned char)'a'][p];
 			else return P[v][p];
 		};
+		
+		auto ms=[&P,&PEO](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
+		{
+			float ykms=0.5;
+			if(ak(" ",v1))return PEO(p,v2,0);
+			else if(v2=='H'&&p==2)return PEO(p,v2,0);
+			else if(ak(" ",v2))return PEO(p,v1,1);
+			else if(p==2&&ak("KGCJWQTDPB",v1))return (float)60.0; // unused
+			else if(ak("aiufxAIUFXeEoO",v1)&&v2=='y')return (PEO(p,v1,1)*((float)1.0-ykms)+PEO(p,v2,0)*ykms);
+			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return (PEO(p,v1,1)*ykms+PEO(p,v2,0)*((float)1.0-ykms));
+			else if(p==15) return std::max(PEO(p,v1,1),PEO(p,v2,0));
+			else if(p==17||p==18)return std::max(PEO(p,v1,1),PEO(p,v2,0));
+			else if((v1=='r'||v2=='r')&&p==16&&v1!='R'&&v2!='R')return P[(unsigned char)'r'][p];
+			else if(p==2&&v2=='h')return std::max(PEO(p,v1,1),PEO(p,v2,0));
+			else return std::min(PEO(p,v1,1),PEO(p,v2,0));
+		};
+		
 		auto sv=[](unsigned char v1,unsigned char v2)
 		{
 			return 
@@ -406,13 +409,13 @@ void Controller::vk(std::string s)
 					:ak("AIUFXeEoO",v)?
 					((t<hd/2.0)?
 					(ms(p,pv,v)*(1.0-t*2.0/hd)
-					 +(ak("EO",v)?ayauk(p,v,0)
+					 +(ak("EO",v)?PEO(p,v,0)
 					 :(v=='A'&&ak("ntTdD",pv))?P[(unsigned char)'a'][p]// ना॒ना॒कृ॒ते।
 					 :P[v][p])*t*2.0/hd)
 					:(vd-t<hd/2.0)?
 					(ms(p,v,vc)*(1-(vd-t)*2.0/hd)
-					 +(ak("EO",v)?ayauk(p,v,1):P[v][p])*((vd-t)*2.0/hd))
-					:(ak("EO",v)?(ayauk(p,v,0)*(vd-hd/2.0-t)/(vd-hd)+ayauk(p,v,1)*(t-hd/2.0)/(vd-hd))
+					 +(ak("EO",v)?PEO(p,v,1):P[v][p])*((vd-t)*2.0/hd))
+					:(ak("EO",v)?(PEO(p,v,0)*(vd-hd/2.0-t)/(vd-hd)+PEO(p,v,1)*(t-hd/2.0)/(vd-hd))
 						// ना॒ना॒कृ॒ते।
 					 :(v=='A'&&ak("ntTdD",pv))?
 					 	P[(unsigned char)'a'][p]*(vd-hd/2.0-t)/(vd-hd)+P[v][p]*(t-hd/2.0)/(vd-hd)
