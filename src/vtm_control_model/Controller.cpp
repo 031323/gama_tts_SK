@@ -207,8 +207,8 @@ void Controller::vk(std::string s)
 	for(unsigned char i:std::string("tTdDn"))
 	{
 		P[i][13]=i=='n'?0.01:0.1;
-		P[i][12]=i=='n'?1.5:0.3;
-		P[i][14]=1;
+		P[i][12]=i=='n'?1:0.3;
+		P[i][14]=0.8;
 		P[i][16]=P[i][12];
 		P[i][11]=i=='n'?1.5:1.2;
 		P[i][3]=0;
@@ -298,7 +298,7 @@ void Controller::vk(std::string s)
 			:vnd;
 		};
 		float vd=vdd(v);     // अ॒व॒धिः 
-		if(ak("aAiIuUfFxXeEoO",pv)&&!ak("aAiIuUfFxXeEoO",vc))vd=hd;
+		if(ak("aAiIuUfFxXeEoO",pv)&&!ak("aAiIuUfFxXeEoO",v)&&!ak("aAiIuUfFxXeEoO",vc))vd=hd;
 		if(ak("aiufx",pv))
 		{	
 			float mk=hd+vd;
@@ -436,7 +436,7 @@ void Controller::vk(std::string s)
 			{
 				p=15;
 				double nd=std::min(hd,vd)/2.0;
-				PL[p]=true?(ms(p,pv,v)*(1.0-t/vd)
+				PL[p]=false?(ms(p,pv,v)*(1.0-t/vd)
 					+ms(p,v,vc)*(t/vd)):
 					((t<nd)?
 					(ms(p,pv,v)*(1.0-t/nd)+P[v][p]*t/nd)
