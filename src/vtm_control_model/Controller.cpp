@@ -303,7 +303,7 @@ void Controller::vk(std::string s)
 		{	
 			float mk=hd+vd;
 			int vs=1;
-			for(size_t j=i+1;j<s.size();j++)
+			for(size_t j=i+1;j<s.size()&&j<i+6;j++)
 			{
 				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
 				{
@@ -379,18 +379,23 @@ void Controller::vk(std::string s)
 					(ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/vd)
 					:(ms(p,v,vc)*(t*2.0/vd-1)+P[v][p]*(2.0-t*2.0/vd)));
 			else PL[p]=0;
-			if(ak("kKgGwWqQtTdDpPbB",v))
-			{
-				float kpv=hd*0;
-				float kk=hd*0.2;
-				if(ak("kKgG",v)&&(!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=20;
-			}
 			p=3;
 			if(ak("cCjJ",v))
 			{
 				PL[p]=ak("cCjJ",vc)?0:t<vd/2.0?0:P[v][p];	
 			}
 			else PL[p]=P[v][p];
+			if(ak("kKgGwWqQtTdDpPbB",v)) //TODO: p=2 | p=3 ?
+			{
+				float kpv=hd*0;
+				float kk=hd*0.2;
+				if((!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=
+						(ak("kKgG",v)?100
+						 :ak("tTdD",v)?100
+						 :ak("wWqQ",v)?0
+						 :0
+						)*(t-vd+kk+kpv)*(vd-kpv-t)/kk/kk;
+			}
 			for(p=4;p<7;p++)
 				PL[p]=P[v][p];
 			for(p=7;p<22;p++)
