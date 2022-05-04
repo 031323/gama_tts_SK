@@ -197,7 +197,7 @@ void Controller::vk(std::string s)
 	set('t',"th");set('T',"th");set('d',"dh");set('D',"dh");set('n',"th");
 	set('p', "p");set('P', "p");set('b', "b");set('B', "b");set('m', "m");
 	set('y', "y");set('r', "t");set('l', "l");set('v', "u");
-	set('S', "s");set('z',"sh");set('s', "s");set('h', "h");
+	set('S',"ch");set('z',"sh");set('s', "s");set('h', "h");
 	set('V',"f");
 	P[(unsigned char)'v'][3]=0;
 	P[(unsigned char)'v'][1]=54;
@@ -234,14 +234,21 @@ void Controller::vk(std::string s)
 	{
 		P[i][12]=0.1;
 		for(int p=3;p<4;p++)
-			P[i][p]=18;
+			P[i][p]=30;
 	}
 	for(unsigned char i:std::string("KGCJWQTDPB"))
 	{
 		P[i][2]=18;
 	}
-	for(int i=4;i<=6;i++)
-		P[(unsigned char)'S'][i]=P[(unsigned char)'c'][i];
+	{
+		P[(unsigned char)'S'][12]=0.2;
+		P[(unsigned char)'S'][16]=P[(unsigned char)'S'][12];
+		P[(unsigned char)'S'][3]=P[(unsigned char)'s'][3];
+		P[(unsigned char)'S'][5]=4400;
+		P[(unsigned char)'S'][6]=2300;
+		//for(int i=4;i<=6;i++)
+		//	P[(unsigned char)'S'][i]=P[(unsigned char)'c'][i];
+	}
 	for(int i=7;i<=16;i++)
 	{
 		float nt=10;
@@ -350,6 +357,7 @@ void Controller::vk(std::string s)
 					;
 		};
 		//TODO: र॒का॒रः।  अ॒नु॒स्वा॒रः।  ह्र॒स्वा॒र्द्ध॒का॒ले आ॑स्यपरि॒वर्त्त॑नम्।
+		// शा॒स्त्रम्। ह॒का॒रः।
 		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
 			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
@@ -382,15 +390,15 @@ void Controller::vk(std::string s)
 			p=3;
 			if(ak("cCjJ",v))
 			{
-				PL[p]=ak("cCjJ",vc)?0:t<vd/2.0?0:P[v][p];	
+				PL[p]=ak("cCjJ",vc)?0:t<vd/2.0?0:P[v][p]*(vd-t)*2.0/vd;	
 			}
 			else PL[p]=P[v][p];
-			if(ak("kKgGwWqQtTdDpPbB",v)) //TODO: p=2 | p=3 ?
+			if(ak("kKgGwWqQtTdDpPbB",v)) 
 			{
 				float kpv=hd*0;
 				float kk=hd*0.2;
 				if((!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=
-						(ak("kKgG",v)?100
+						(ak("kKgG",v)?(vc=='y'?60:100)
 						 :ak("tTdD",v)?100
 						 :ak("wWqQ",v)?0
 						 :0
