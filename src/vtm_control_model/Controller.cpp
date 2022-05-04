@@ -206,11 +206,20 @@ void Controller::vk(std::string s)
 
 	for(unsigned char i:std::string("tTdDn"))
 	{
+		if(1)
+		{
 		P[i][13]=i=='n'?0.01:0.1;
 		P[i][12]=i=='n'?1:0.3;
 		P[i][14]=0.8;
-		P[i][16]=P[i][12];
+		P[i][16]=1.2;
 		P[i][11]=i=='n'?1.5:1.2;
+		}
+		else
+		{
+			for(int p=7;p<=16;p++)
+				P[i][p]=P[(unsigned char)'s'][p];
+			P[i][13]=0.1;
+		}
 		P[i][3]=0;
 	}
 	for(unsigned char i:std::string("wWqQR"))
@@ -241,7 +250,7 @@ void Controller::vk(std::string s)
 		P[i][2]=18;
 	}
 	{
-		P[(unsigned char)'S'][12]=0.2;
+		P[(unsigned char)'S'][12]=0.13;
 		P[(unsigned char)'S'][16]=P[(unsigned char)'S'][12];
 		P[(unsigned char)'S'][3]=P[(unsigned char)'s'][3];
 		P[(unsigned char)'S'][5]=4400;
@@ -357,12 +366,13 @@ void Controller::vk(std::string s)
 					;
 		};
 		//TODO: र॒का॒रः।  अ॒नु॒स्वा॒रः।  ह्र॒स्वा॒र्द्ध॒का॒ले आ॑स्यपरि॒वर्त्त॑नम्।
-		// शा॒स्त्रम्। ह॒का॒रः।
+		// SAstram. hakAraH.
+		// ambare. kuYjarAm.
 		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
 			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
-			PL[p]=-6.0*(1.0+0.05*(float)rand()/(float)RAND_MAX);
+			PL[p]=-7.0*(1.0+0.05*(float)rand()/(float)RAND_MAX);
 			{
 				p=1;
 				float nd=std::min(0.03,hd*0.2);
@@ -396,10 +406,10 @@ void Controller::vk(std::string s)
 			if(ak("kKgGwWqQtTdDpPbB",v)) 
 			{
 				float kpv=hd*0;
-				float kk=hd*0.2;
+				float kk=ak("pPbB",v)?hd*0.1:hd*0.2;
 				if((!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=
 						(ak("kKgG",v)?(vc=='y'?60:100)
-						 :ak("tTdD",v)?100
+						 :ak("tT",v)?!ak("NYrnmy",vc)?200:100
 						 :ak("wWqQ",v)?0
 						 :0
 						)*(t-vd+kk+kpv)*(vd-kpv-t)/kk/kk;
@@ -411,8 +421,8 @@ void Controller::vk(std::string s)
 				float ptk=std::min(hd*0.5,vd*0.5);
 				if(p!=15)PL[p]=
 					(v=='H'&&vc==' ')?P[pv][p]
-					:(ak("wWqQRpPbBm",pv)&&t<vd/2.0)?
-					(t<ptk?((ms(p,pv,v)*(1.0-t*2.0/vd)+P[v][p]*t*2.0/ptk))
+					:(false&&ak("wWqQRpPbBm",pv)&&t<vd/2.0)?
+					(t<ptk?(ms(p,pv,v)*(1.0-t/ptk)+P[v][p]*t/ptk)
 					 :P[v][p])
 					:
 					(ak("aiufx",v)||ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",v)||(ak("o",v)&&t<vd/2.0))?
