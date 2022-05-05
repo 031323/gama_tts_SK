@@ -342,7 +342,8 @@ void Controller::vk(std::string s)
 		auto ms=[&P,&PEO](int p,unsigned char v1,unsigned char v2) // म॒ध्य॒स्थि॒तिः
 		{
 			float ykms=0.5;
-			if(ak(" ",v1))return PEO(p,v2,0);
+			if(v1=='t'&&v2=='r'&&p>=7&&p<=16)return std::min(PEO(p,v1,1),(float)10);
+			else if(ak(" ",v1))return PEO(p,v2,0);
 			else if(v2=='H'&&p==2)return PEO(p,v2,0);
 			else if(ak(" ",v2))return PEO(p,v1,1);
 			else if(p==2&&ak("KGCJWQTDPB",v1))return (float)60.0; // unused
