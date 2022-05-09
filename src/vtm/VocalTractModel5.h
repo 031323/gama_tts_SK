@@ -59,7 +59,7 @@
 
 #include "global.h"
 
-#define GS_VTM5_MIN_RADIUS (vv?0.00000001:0.01)
+#define GS_VTM5_MIN_RADIUS (vv?0.0001:0.01)
 #define GS_VTM5_MIN_FRIC_POS (0.0)
 #define GS_VTM5_MAX_FRIC_POS (7.0)
 

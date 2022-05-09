@@ -129,41 +129,6 @@ inline bool ak(std::string s,char c) // अ॒धि॒का॒र॒सू॒�
 }
 void Controller::vk(std::string s)
 {
-	if(0){
-	auto a_PL=model_.postureList().find("i");
-	std::vector<float> PL;
-	PL.resize(22);
-	for(int i=0;i<16;i++)
-		PL[i]=a_PL->getParameterTarget(i);
-	PL[0]=-10;
-	PL[1]=1;
-	PL[16]=PL[12];
-	PL[17]=0;
-	PL[18]=2;
-	PL[19]=0;
-	PL[20]=0;
-	PL[21]=0;
-
-	float ak=0.15,rp=0.05,rk=0.;
-	for(int i=0;i<(ak*2+rp*2+rk+0.5)*250;i++)
-	{
-		PL[17]=0.1+
-		((i<ak*250||i>(ak+rp*2+rk)*250)?0
-		:(i<(ak+rp)*250)?((float)i-ak*250)/rp/250
-		:(i>(ak+rp+rk)*250)?((ak+rp*2.0+rk)*250-i)/rp/250
-		:1)/2.0;
-
-		if(i<ak*250*0.5){PL[1]=60.0*(float)i/ak/0.5/250;}
-		else if((ak*2+rp*2+rk)*250-i<ak*0.25*250)PL[1]=60.0*std::max(((ak*2+rp*2+rk)*250-i)/ak/0.25/250,0.0);
-		else PL[1]=60-PL[17]*2*5;
-
-		PL[16]=1.8-PL[17];
-		PL[18]=PL[17];
-		//PL[11]=1.8-PL[17];
-		PL[12]=a_PL->getParameterTarget(12)+(0.2-a_PL->getParameterTarget(12))*PL[17]*2.0;
-		vtmParamList_.push_back(PL);
-	}
-	}
 	{
 		std::string ns="";
 		for(size_t i=0;i<s.size();i++)
@@ -208,11 +173,15 @@ void Controller::vk(std::string s)
 	{
 		if(1)
 		{
-		P[i][13]=i=='n'?0.01:0.1;
-		P[i][12]=i=='n'?1:0.3;
 		P[i][14]=0.8;
-		P[i][16]=1.2;
-		P[i][11]=i=='n'?1.5:1.2;
+		P[i][13]=0.1;
+		P[i][12]=0.1;
+		P[i][16]=1;
+		P[i][11]=1;
+		P[i][10]=1.25;//1.25
+		P[i][9]=1.49;//1.49
+		P[i][8]=1.31;//1.31
+		P[i][7]=0.8;//0.8
 		}
 		else
 		{
@@ -232,6 +201,7 @@ void Controller::vk(std::string s)
 		for(int p=0;p<4;p++)
 			P[i][p]=P[(unsigned char)'m'][p];
 		P[i][15]=P[(unsigned char)'m'][15];
+		//if(i=='n')P[i][15]=1;
 	}
 	for(unsigned char i:std::string("jJ"))
 	{
@@ -280,9 +250,6 @@ void Controller::vk(std::string s)
 	P[(unsigned char)'M'][15]=1.0;
 	P[(unsigned char)'z'][6]=1700;
 
-	if(0)for(unsigned char v:std::string("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh"))
-		for(int i=7;i<15;i++)
-			if(P[v][i]<0.09)std::cout<<"error: "<<(char)v<<"\n";
 	for(unsigned char v:std::string("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh"))
 		for(int i=7;i<=18;i++)
 		{
@@ -330,7 +297,6 @@ void Controller::vk(std::string s)
 			}
 			if(vs>1)vd+=std::max(3*hd-mk,(float)0.0);
 		}
-		[[maybe_unused]] bool ks=ak("aAiIuUfFxXeEoOMgGNjJYqQRdDnbBmyrlv",v); // क॒ण्ठ॒श॒ब्दाय॑
 		
 		auto PEO=[&P](int p,unsigned char v,int k)
 		{
@@ -351,7 +317,9 @@ void Controller::vk(std::string s)
 			else if(ak("aiufxAIUFXeEoO",v2)&&v1=='y')return (PEO(p,v1,1)*ykms+PEO(p,v2,0)*((float)1.0-ykms));
 			else if(p==15) return std::max(PEO(p,v1,1),PEO(p,v2,0));
 			else if(p==17||p==18)return std::max(PEO(p,v1,1),PEO(p,v2,0));
-			else if((v1=='r'||v2=='r')&&p==16&&v1!='R'&&v2!='R')return P[(unsigned char)'r'][p];
+			//else if((v1=='r'||v2=='r')&&p==16&&v1!='R'&&v2!='R')return P[(unsigned char)'r'][p];
+			else if((v1=='r'||v2=='r')&&p==16&&(ak("aAiIuUfFxXeEoO",v1)||ak("aAiIuUfFxXeEoO",v2)))
+					return P[(unsigned char)'r'][p];
 			else if(p==2&&v2=='h')return std::max(PEO(p,v1,1),PEO(p,v2,0));
 			else return std::min(PEO(p,v1,1),PEO(p,v2,0));
 		};
@@ -373,7 +341,7 @@ void Controller::vk(std::string s)
 		{
 			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
-			PL[p]=-7.0*(1.0+0.05*(float)rand()/(float)RAND_MAX);
+			PL[p]=-(ak("gGjJqQdDbB",v)?8.0:7.0)*(1.0+0.05*(float)rand()/(float)RAND_MAX);
 			{
 				p=1;
 				float nd=std::min(0.03,hd*0.2);
@@ -410,7 +378,7 @@ void Controller::vk(std::string s)
 				float kk=ak("pPbB",v)?hd*0.1:hd*0.2;
 				if((!sv(v,vc))&&t>vd-kk-kpv&&t<vd-kpv)PL[p]=
 						(ak("kKgG",v)?(vc=='y'?60:100)
-						 :ak("tT",v)?!ak("NYrnmy",vc)?200:100
+						 :ak("tT",v)?!ak("NYrnmy",vc)?(0*200):100
 						 :ak("wWqQ",v)?0
 						 :0
 						)*(t-vd+kk+kpv)*(vd-kpv-t)/kk/kk;
@@ -459,7 +427,7 @@ void Controller::vk(std::string s)
 			}
 			{
 				p=15;
-				double nd=std::min(hd,vd)/2.0;
+				double nd=std::min(vd,vd)/2.0;
 				PL[p]=false?(ms(p,pv,v)*(1.0-t/vd)
 					+ms(p,v,vc)*(t/vd)):
 					((t<nd)?
