@@ -259,8 +259,8 @@ private:
 	struct Junction2 {
 		TFloat coeff{};
 		void configure(TFloat leftRadius, TFloat rightRadius) {
-			const TFloat r0_2 =  vv?leftRadius: (leftRadius *  leftRadius);
-			const TFloat r1_2 =  vv?rightRadius:(rightRadius * rightRadius);
+			const TFloat r0_2 =  (leftRadius *  leftRadius);
+			const TFloat r1_2 =  (rightRadius * rightRadius);
 			coeff = (r0_2 - r1_2) / (r0_2 + r1_2);
 		}
 	};
@@ -270,9 +270,9 @@ private:
 		TFloat upperCoeff{};
 		void configure(TFloat leftRadius, TFloat rightRadius, TFloat upperRadius) {
 			// Flow equations.
-			const TFloat r0_2 =  vv?leftRadius: (leftRadius *  leftRadius);
-			const TFloat r1_2 = vv?rightRadius: (rightRadius * rightRadius);
-			const TFloat r2_2 = vv?upperRadius: (upperRadius * upperRadius);
+			const TFloat r0_2 =  (leftRadius *  leftRadius);
+			const TFloat r1_2 = (rightRadius * rightRadius);
+			const TFloat r2_2 = (upperRadius * upperRadius);
 			const TFloat c = 1.0f / (r0_2 + r1_2 + r2_2);
 			leftCoeff  = c * (r0_2 - r1_2 - r2_2);
 			rightCoeff = c * (r1_2 - r0_2 - r2_2);
@@ -285,9 +285,9 @@ private:
 		TFloat upperCoeff{};
 		void configure(TFloat leftRadius, TFloat rightRadius, TFloat upperRadius) {
 			// Flow equations.
-			const TFloat r0_2 =  vv?leftRadius: (leftRadius *  leftRadius);
-			const TFloat r1_2 = vv?rightRadius: (rightRadius * rightRadius);
-			const TFloat r2_2 = vv?upperRadius: (upperRadius * upperRadius);
+			const TFloat r0_2 =  (leftRadius *  leftRadius);
+			const TFloat r1_2 = (rightRadius * rightRadius);
+			const TFloat r2_2 = (upperRadius * upperRadius);
 			const TFloat c = 1.0f / (r0_2 + r1_2 + 2.0*r2_2);
 			leftCoeff  = c * (r0_2 - r1_2 - 2.0*r2_2);
 			rightCoeff = c * (r1_2 - r0_2 - 2.0*r2_2);

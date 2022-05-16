@@ -253,8 +253,6 @@ void Controller::vk(std::string s)
 	for(unsigned char v:std::string("aAiIuUfFxXeEoOMHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh"))
 		for(int i=7;i<=18;i++)
 		{
-			if(vv)
-				P[v][i]=P[v][i]*P[v][i];
 			if(ak("kKNwWRtTnpPm",v)&&P[v][i]<0.11)P[v][i]=0;
 		}
 
