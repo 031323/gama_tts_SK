@@ -226,7 +226,7 @@ private:
 		PARAM_r_1=18,
 		PARAM_spk=19, // स्फो॒ट॒का॒लः
 		PARAM_sppk=20, // स्फो॒ट॒प्र॒का॒रः
-		PARAM_spt=21, // स्फो॒ट॒ती॒व्र॒ता
+		PARAM_vb=21, // वा॒यु॒भर॑णम्
 		TOTAL_PARAMETERS_sk=22
 	};
 	enum LogParameters {
@@ -596,7 +596,7 @@ VocalTractModel5<TFloat, SectionDelay>::execSynthesisStep()
 		const TFloat maxGlottalLossFactor = 1.0f - glotAmplitude * (config_.maxGlottalLoss / 100.0f);
 		const TFloat glottalLossFactor = minGlottalLossFactor + (maxGlottalLossFactor - minGlottalLossFactor) * pulse;
 
-		signal = vocalTract(noisyPulse + aspAmplitude * fricationNoise,
+		signal = vocalTract(currentParameter_[PARAM_vb]+noisyPulse + aspAmplitude * fricationNoise,
 							config_.fricationFactor * bandpassFilter_->filter(fricationNoise),
 							glottalLossFactor);
 	}
@@ -717,7 +717,7 @@ VocalTractModel5<TFloat, SectionDelay>::vocalTract(TFloat input, TFloat fricatio
 		Ru[1].top[outPtr_]*=(1.0+0.004*(float)rand()/RAND_MAX);
 		propagateJunction(Ru[1], JRu[1], Ru[2]);
 	}
-	bool as=false; // अ॒न्त्य॒श॒ब्दः
+	constexpr bool as=false; // अ॒न्त्य॒श॒ब्दः
 	if((!as)&&sk)propagateJunction4d(oropharynx_[S25],JR[1],oropharynx_[S26],Ru[2]);
 	else propagateJunction(oropharynx_[S25], oropharynxJunction_[J6], oropharynx_[S26]);
 	propagate(oropharynx_[S26], oropharynx_[S27]);
@@ -823,7 +823,7 @@ VocalTractModel5<TFloat, SectionDelay>::setAllParameters(const std::vector<float
 						,TFloat{GS_VTM5_MIN_RADIUS});
 		i=PARAM_spk;currentParameter_[i]=parameters[i];
 		i=PARAM_sppk;currentParameter_[i]=parameters[i];
-		i=PARAM_spt;currentParameter_[i]=parameters[i];
+		i=PARAM_vb;currentParameter_[i]=parameters[i];
 	}
 	for (std::size_t i = PARAM_GLOT_PITCH; i <= PARAM_FRIC_BW; ++i) {
 		currentParameter_[i] = parameters[i];
