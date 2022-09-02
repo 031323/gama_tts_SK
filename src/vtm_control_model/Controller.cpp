@@ -288,13 +288,13 @@ void Controller::vk(std::string s)
 			bool ht=false;
 			for(size_t j=i+1;j<s.size()&&j<i+6;j++)
 			{
-				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
+				if(ak("MHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
 					vs++;
 				else break;
 			}
 			for(long j=i;j>=0&&j>(long)i-6;j--)
 			{
-				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
+				if(ak("MHkKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
 					vs++;
 				else
 				{
