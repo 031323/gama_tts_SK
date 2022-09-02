@@ -129,6 +129,9 @@ inline bool ak(std::string s,char c) // अ॒धि॒का॒र॒सू॒�
 }
 void Controller::vk(std::string s)
 {
+
+	bool mt=getenv("MCGV");
+
 	{
 		std::string ns="";
 		for(size_t i=0;i<s.size();i++)
@@ -271,14 +274,48 @@ void Controller::vk(std::string s)
 		float vnd=0.1*0.75;
 		float hd=0.15*0.75; // ह्र॒स्वा॒व॒धिः॒
 		float pd=-0.01; // प्र॒थ॒मा॒व॒धिः
-		auto vdd=[hd,vnd](unsigned char v)
+		auto vdd=[hd,vnd,mt](unsigned char v)
 		{
 			return ak("aiufx",v)?hd
 			:ak("AIUFXeEoO",v)?hd*2.0
-			:v=='H'?hd
+			:v=='H'?mt?vnd:hd
 			:vnd;
 		};
 		float vd=vdd(v);     // अ॒व॒धिः 
+		if(mt)
+		{
+			int vs=0;
+			bool ht=false;
+			for(size_t j=i+1;j<s.size()&&j<i+6;j++)
+			{
+				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
+					vs++;
+				else break;
+			}
+			for(long j=i;j>=0&&j>(long)i-6;j--)
+			{
+				if(ak("kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh",s[j]))
+					vs++;
+				else
+				{
+					if(ak("aiufx",s[j]))ht=true;
+					break;
+				}
+			}
+			if(vs==0)vs=1;
+			if(ak("AIUFXeEoO",v)&&vs==1)
+				vd=2*hd+vnd;
+			if(vs>1&&!ak("aAiIuUfFxXeEoO",v))
+			{
+				auto pk=ht?(hd+vnd):vnd;
+				if((pk+vnd)/vs<vnd)
+					vd=(pk+vnd)/vs;
+				else
+					vd=ak("aAiIuUfFxXeEoO",pv)?(pk-vnd*(vs-2)):vnd;
+			}
+		}
+		else
+		{
 		if(ak("aAiIuUfFxXeEoO",pv)&&!ak("aAiIuUfFxXeEoO",v)&&!ak("aAiIuUfFxXeEoO",vc))vd=hd;
 		if(ak("aiufx",pv))
 		{	
@@ -295,7 +332,7 @@ void Controller::vk(std::string s)
 			}
 			if(vs>1)vd+=std::max(3*hd-mk,(float)0.0);
 		}
-		
+		}
 		auto PEO=[&P](int p,unsigned char v,int k)
 		{
 			if(v=='E')return k?P[(unsigned char)'i'][p]:P[(unsigned char)'a'][p];
@@ -335,6 +372,7 @@ void Controller::vk(std::string s)
 		//TODO: र॒का॒रः।  अ॒नु॒स्वा॒रः।  ह्र॒स्वा॒र्द्ध॒का॒ले आ॑स्यपरि॒वर्त्त॑नम्।
 		// SAstram. hakAraH.
 		// ambare. kuYjarAm.
+		std::cout<<"vd: "<<vd/0.75<<std::endl;
 		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
 			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
@@ -438,7 +476,7 @@ void Controller::vk(std::string s)
 			vtmParamList_.push_back(PL);
 		}
 		if(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v))
-			for(double t=0;t<hd*0.3;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+			for(double t=0;t<(mt?vnd:(hd*0.3));t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 				vtmParamList_.push_back(PL);
 
 	}
