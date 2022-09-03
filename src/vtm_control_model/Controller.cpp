@@ -261,6 +261,7 @@ void Controller::vk(std::string s)
 
 	std::vector<float> PL;
 	PL.resize(22);
+	double ssvk=0,svk=0;
 	for(size_t i=0;i<s.size();i++)
 	{
 		unsigned char v=s[i];
@@ -373,8 +374,10 @@ void Controller::vk(std::string s)
 		// SAstram. hakAraH.
 		// ambare. kuYjarAm.
 		std::cout<<"vd: "<<vd/0.75<<std::endl;
-		for(double t=0;t<vd;t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+		ssvk+=vd;
+		for(;svk<ssvk;svk+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 		{
+			double t=vd-ssvk+svk;
 			float mpk=std::min(hd/(float)2.0,vd); // म॒हा॒प्रा॒ण॒का॒लः
 			int p=0;
 			PL[p]=-(ak("gGjJqQdDbB",v)?8.0:7.0)*(1.0+0.05*(float)rand()/(float)RAND_MAX);
@@ -476,8 +479,11 @@ void Controller::vk(std::string s)
 			vtmParamList_.push_back(PL);
 		}
 		if(ak("aiufxAIUFXeEoO",vc)&&ak("aiufxAIUFXeEoO",v))
-			for(double t=0;t<(mt?vnd:(hd*0.3));t+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
+		{
+			ssvk+=(mt?vnd:(hd*0.3));
+			for(;svk<ssvk;svk+=(float)vtmControlModelConfig_.controlPeriod/1000.0)
 				vtmParamList_.push_back(PL);
+		}
 
 	}
 	PL[1]=0;PL[2]=0;PL[3]=0;
